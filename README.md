@@ -32,6 +32,6 @@ Snowflake-Grower is open source at [GitHub](https://github.com/evoluteur/snowfla
 
 Had fun browsing the app? [Buy me a coffee by becoming a sponsor](https://github.com/sponsors/evoluteur).
 
-You may also be interested in my other projects [Reaction-Diffusion](https://github.com/evoluteur/reaction-diffusion) ([demo](https://evoluteur.github.io/reaction-diffusion/)), [Sacred-Geometry](https://github.com/evoluteur/sacred-geometry) ([demo](https://evoluteur.github.io/sacred-geometry/)) and [Mandala-Maker](https://github.com/evoluteur/mandala-maker) ([demo](https://evoluteur.github.io/mandala-maker/)). See them all on [Esoterica](https://evoluteur.github.io/esoterica.html).
+You may also be interested in my other projects [Reaction-Diffusion](https://github.com/evoluteur/reaction-diffusion) ([demo](https://evoluteur.github.io/reaction-diffusion/)), [Sacred-Geometry](https://github.com/evoluteur/sacred-geometry) ([demo](https://evoluteur.github.io/sacred-geometry/)) and [Mandala-Maker](https://github.com/evoluteur/mandala-maker) ([demo](https://evoluteur.github.io/mandala-maker/)). See them all on [Generative Art](https://evoluteur.github.io/generative-art.html).
 
 Copyright (c) 2026 [Olivier Giulieri](https://evoluteur.github.io/).
