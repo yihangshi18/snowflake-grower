@@ -86,6 +86,11 @@ const reset = () => {
   maxDist = 0;
   freeze(idx(C, C));
   s[idx(C, C)] = 1;
+  // a new crystal always starts growing
+  if (state.paused) {
+    state.paused = false;
+    $("btn-pause").textContent = "Pause";
+  }
   dirty = true;
 };
 
