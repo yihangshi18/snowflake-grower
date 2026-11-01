@@ -25,6 +25,20 @@ const themeIcons = {
 // const densities = ["huge", "big", "medium", "small", "tiny"];
 const densities = ["big", "medium", "small", "tiny"];
 
+// localStorage can throw (e.g. site data blocked): never let it stop the page
+const storeGet = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    return null;
+  }
+};
+const storeSet = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {}
+};
+
 const setupPage = (id) => {
   // if (id === "home") {
   //   //
@@ -38,8 +52,8 @@ const setupPage = (id) => {
       elem.innerHTML = h;
     }
   }
-  const theme = localStorage.getItem("omg-theme") || defaultTheme();
-  const density = localStorage.getItem("omg-density") || "medium";
+  const theme = storeGet("omg-theme") || defaultTheme();
+  const density = storeGet("omg-density") || "medium";
   setTheme(theme);
   renderThemePicker(theme);
   setDensity(density);
@@ -82,7 +96,7 @@ const setTheme = (id) => {
     if (elem.getAttribute("href") !== href) {
       elem.setAttribute("href", href);
     }
-    localStorage.setItem("omg-theme", id);
+    storeSet("omg-theme", id);
     // lets page css target a theme: html[data-theme="evol-blue"] ...
     document.documentElement.setAttribute("data-theme", id);
     const meta = document.querySelector('meta[name="theme-color"]');
@@ -99,6 +113,6 @@ const setDensity = (id) => {
   let elem = document.getElementById("omg-body");
   if (elem) {
     elem.className = id;
-    localStorage.setItem("omg-density", id);
+    storeSet("omg-density", id);
   }
 };
