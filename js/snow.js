@@ -47,7 +47,7 @@ let s = new Float32Array(total); // water in each cell
 let u = new Float32Array(total); // the part that diffuses
 let frozen = new Uint8Array(total);
 let receptive = new Uint8Array(total);
-let born = new Uint16Array(total); // step at which each cell froze
+let born = new Uint32Array(total); // step at which each cell froze
 let inside = []; // indices of the cells inside the radius
 let dist = new Float32Array(total); // distance to the center, in cells
 let steps = 0, done = false, maxDist = 0;
@@ -91,7 +91,7 @@ const reset = () => {
 
 const freeze = (i) => {
   frozen[i] = 1;
-  born[i] = Math.min(65535, steps);
+  born[i] = steps;
   receptive[i] = 1;
   for (let k = 0; k < 6; k++) receptive[neighbors[i * 6 + k]] = 1;
   if (dist[i] > maxDist) maxDist = dist[i];
