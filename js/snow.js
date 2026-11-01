@@ -86,6 +86,8 @@ const reset = () => {
   maxDist = 0;
   freeze(idx(C, C));
   s[idx(C, C)] = 1;
+  // drifting, a new crystal starts from the weather of the moment
+  if (state.drift) saveHash();
   // a new crystal always starts growing
   if (state.paused) {
     state.paused = false;
@@ -249,7 +251,7 @@ const loop = (now) => {
       driftT += 0.004 * f;
       state.b = Math.min(0.9, Math.max(0.3, state.b + (Math.sin(driftT * 3.1) + Math.sin(driftT * 7.3)) * 0.0015 * f));
       state.g = Math.min(0.006, Math.max(0.0001, state.g * (1 + Math.sin(driftT * 5.7) * 0.01 * f)));
-      showValues();
+      showValues(false); // the weather drifts, the address keeps where it started
     }
     stepBudget += state.speed * f;
     const n = Math.floor(stepBudget);
@@ -276,7 +278,7 @@ const $ = (id) => document.getElementById(id);
 const gToSlider = (g) => Math.log10(g / 0.00005) / 3;
 const sliderToG = (v) => 0.00005 * Math.pow(10, v * 3);
 
-const showValues = () => {
+const showValues = (save = true) => {
   $("alpha").value = state.a;
   $("beta").value = state.b;
   $("gamma").value = gToSlider(state.g);
@@ -290,7 +292,7 @@ const showValues = () => {
     : p
       ? p.text
       : "Your own weather.";
-  saveHash();
+  if (save) saveHash();
 };
 
 const setPreset = (id) => {
@@ -311,7 +313,11 @@ const saveHash = () => {
   clearTimeout(hashTimer);
   hashTimer = setTimeout(() => {
     const h = state.preset ? `p=${state.preset}` : `a=${state.a}&b=${state.b.toFixed(3)}&g=${state.g.toPrecision(2)}`;
-    history.replaceState(null, "", "#" + h + (state.style !== "ice" ? `&s=${state.style}` : ""));
+    history.replaceState(
+      null,
+      "",
+      "#" + h + (state.style !== "ice" ? `&s=${state.style}` : "") + (state.drift ? "&d=1" : ""),
+    );
   }, 300);
 };
 
@@ -324,6 +330,7 @@ const readHash = () => {
     if (a > 0 && a <= 3 && b > 0 && b < 1 && g > 0 && g <= 0.05) Object.assign(state, { a, b, g, preset: "" });
   }
   if (styles[q.get("s")]) state.style = q.get("s");
+  if (q.get("d") === "1") Object.assign(state, { drift: true, preset: "" });
 };
 
 const download = () => {
