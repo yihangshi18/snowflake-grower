@@ -356,6 +356,10 @@ const setupControls = () => {
     state.g = sliderToG(+e.target.value);
     custom();
   });
+  // once fully grown, a new frost or diffusion grows a new crystal
+  const regrowIfDone = () => done && reset();
+  $("alpha").addEventListener("change", regrowIfDone);
+  $("gamma").addEventListener("change", regrowIfDone);
   $("style").addEventListener("change", (e) => {
     state.style = e.target.value;
     dirty = true;
