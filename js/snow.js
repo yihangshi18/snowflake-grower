@@ -156,64 +156,65 @@ const buildLookup = () => {
   }
 };
 
-const mix = (c1, c2, t) => [0, 1, 2].map((k) => c1[k] + (c2[k] - c1[k]) * t);
+// colors are packed as RGBA in a Uint32 (little-endian: 0xAABBGGRR)
+const clamp8 = (v) => (v < 0 ? 0 : v > 255 ? 255 : Math.round(v));
+const pack = (r, g, b) => ((255 << 24) | (clamp8(b) << 16) | (clamp8(g) << 8) | clamp8(r)) >>> 0;
 const hsl = (h, sat, l) => {
   const f = (n) => {
     const k = (n + h / 30) % 12;
     const a = sat * Math.min(l, 1 - l);
     return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)));
   };
-  return [f(0), f(8), f(4)];
+  return pack(f(0), f(8), f(4));
 };
 
+// thin new ice is translucent blue, thicker (older) ice is whiter
+const ICE0 = [96, 150, 215], ICE1 = [190, 222, 250], ICE2 = [255, 255, 255];
+const AIR = [38, 70, 120];
+const colors = new Uint32Array(total); // reused every frame
+let pixels; // Uint32 view of img.data
+
 const render = () => {
-  const w = canvas.width, h = canvas.height;
-  const d = img.data;
   const style = state.style;
   const bg = style === "paper" ? [24, 42, 78] : [10, 22, 44];
-  const colors = new Uint8ClampedArray(total * 3);
+  const bg32 = pack(bg[0], bg[1], bg[2]);
+  const paper32 = pack(246, 248, 252);
   const last = Math.max(1, steps);
+  const airScale = 0.9 / Math.max(0.05, state.b);
+  if (!pixels || pixels.buffer !== img.data.buffer) pixels = new Uint32Array(img.data.buffer);
   for (let j = 0; j < inside.length; j++) {
     const i = inside[j];
-    let c;
     if (frozen[i]) {
       if (style === "rings") {
-        c = hsl(200 + (born[i] / last) * 160, 0.6, 0.66 - (born[i] / last) * 0.12);
+        const f = born[i] / last;
+        colors[i] = hsl(200 + f * 160, 0.6, 0.66 - f * 0.12);
       } else if (style === "paper") {
-        c = [246, 248, 252];
+        colors[i] = paper32;
       } else {
-        // thicker (older) ice is whiter, thin new ice is translucent blue,
-        // and a little relief from the neighbor up-left shows the ridges
         const t = Math.min(1, (s[i] - 1) / 1.1);
-        c = t < 0.5 ? mix([96, 150, 215], [190, 222, 250], t * 2) : mix([190, 222, 250], [255, 255, 255], t * 2 - 1);
+        const c1 = t < 0.5 ? ICE0 : ICE1, c2 = t < 0.5 ? ICE1 : ICE2;
+        const tt = t < 0.5 ? t * 2 : t * 2 - 1;
+        // a little relief from the neighbor up-left shows the ridges
         const up = neighbors[i * 6 + 3]; // (q, r - 1)
-        const relief = Math.max(-0.25, Math.min(0.25, (s[i] - s[up]) * 1.5));
-        c = c.map((v) => v * (1 + relief));
+        const m = 1 + Math.max(-0.25, Math.min(0.25, (s[i] - s[up]) * 1.5));
+        colors[i] = pack(
+          (c1[0] + (c2[0] - c1[0]) * tt) * m,
+          (c1[1] + (c2[1] - c1[1]) * tt) * m,
+          (c1[2] + (c2[2] - c1[2]) * tt) * m,
+        );
       }
     } else if (style === "paper") {
-      c = bg;
+      colors[i] = bg32;
     } else {
       // the humid air around, darker where the crystal has drained it
-      const t = Math.min(1, s[i] / Math.max(0.05, state.b));
-      c = mix(bg, [38, 70, 120], t * 0.9);
+      const t = Math.min(0.9, s[i] * airScale);
+      colors[i] = pack(bg[0] + (AIR[0] - bg[0]) * t, bg[1] + (AIR[1] - bg[1]) * t, bg[2] + (AIR[2] - bg[2]) * t);
     }
-    colors[i * 3] = c[0];
-    colors[i * 3 + 1] = c[1];
-    colors[i * 3 + 2] = c[2];
   }
-  for (let p = 0; p < w * h; p++) {
+  const n = pixels.length;
+  for (let p = 0; p < n; p++) {
     const i = lookup[p];
-    const o = p * 4;
-    if (i < 0) {
-      d[o] = bg[0];
-      d[o + 1] = bg[1];
-      d[o + 2] = bg[2];
-    } else {
-      d[o] = colors[i * 3];
-      d[o + 1] = colors[i * 3 + 1];
-      d[o + 2] = colors[i * 3 + 2];
-    }
-    d[o + 3] = 255;
+    pixels[p] = i < 0 ? bg32 : colors[i];
   }
   ctx.putImageData(img, 0, 0);
   if (style === "ice") {
@@ -221,7 +222,7 @@ const render = () => {
     ctx.save();
     ctx.globalCompositeOperation = "screen";
     ctx.globalAlpha = 0.35;
-    ctx.filter = `blur(${Math.round(w / 120)}px)`;
+    ctx.filter = `blur(${Math.round(canvas.width / 120)}px)`;
     ctx.drawImage(canvas, 0, 0);
     ctx.restore();
   }
