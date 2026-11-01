@@ -236,16 +236,25 @@ const render = () => {
 // ------------------------------------------------------------ the loop
 
 let driftT = 0;
-const loop = () => {
+// speed is in steps per 60 Hz frame, so the crystal grows at the same pace on
+// every screen: the steps follow the time elapsed, not the frame count
+let lastT = 0, stepBudget = 0;
+const loop = (now) => {
+  // f = elapsed time in 60 Hz frames, capped so a hidden tab doesn't burst
+  const f = lastT ? Math.min(6, ((now - lastT) * 60) / 1000) : 1;
+  lastT = now;
   if (!state.paused && !done) {
     if (state.drift) {
       // the crystal falls through layers of cloud: humidity and frost wander
-      driftT += 0.004;
-      state.b = Math.min(0.9, Math.max(0.3, state.b + (Math.sin(driftT * 3.1) + Math.sin(driftT * 7.3)) * 0.0015));
-      state.g = Math.min(0.006, Math.max(0.0001, state.g * (1 + Math.sin(driftT * 5.7) * 0.01)));
+      driftT += 0.004 * f;
+      state.b = Math.min(0.9, Math.max(0.3, state.b + (Math.sin(driftT * 3.1) + Math.sin(driftT * 7.3)) * 0.0015 * f));
+      state.g = Math.min(0.006, Math.max(0.0001, state.g * (1 + Math.sin(driftT * 5.7) * 0.01 * f)));
       showValues();
     }
-    for (let i = 0; i < state.speed && !done; i++) step();
+    stepBudget += state.speed * f;
+    const n = Math.floor(stepBudget);
+    stepBudget -= n;
+    for (let i = 0; i < n && !done; i++) step();
     if (state.drift) refreshAir();
     dirty = true;
   }
