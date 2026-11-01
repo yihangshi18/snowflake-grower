@@ -112,6 +112,10 @@ const step = () => {
     const i = inside[j];
     u[i] = receptive[i] ? 0 : s[i];
   }
+  // the average is over the cell and its 6 neighbors (7 cells), where Reiter
+  // averages the 6 neighbors only: Reiter's alpha is this alpha x 6/7, and the
+  // presets are tuned to it. It stays stable up to alpha = 28/9 (about 3.1),
+  // hence the slider's maximum of 3.
   const k = a / 2;
   for (let j = 0; j < n; j++) {
     const i = inside[j];
